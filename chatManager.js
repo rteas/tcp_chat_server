@@ -108,6 +108,8 @@ class ChatManager{
         var oldRoom = this.roomMap.get(userRoom);
         oldRoom.removeUser(socket.user);
       }
+      var msg = "* new user joined chat: " + socket.user.name;
+      this.broadcastRoomMessage(roomname, msg);
       room.addUser(socket.user);
       this.listRoomOccupants(socket, room);
       
@@ -121,7 +123,7 @@ class ChatManager{
     var room = this.roomMap.get(roomname);
     if(room){
       var user = socket.user;
-      this.broadcastRoomMessage(roomname, "* user has left "+ roomname + ' ' + user.name);
+      this.broadcastRoomMessage(roomname, "* user has left "+ roomname + ': ' + user.name);
       room.removeUser(user);
     }
     else{
@@ -132,7 +134,7 @@ class ChatManager{
   listRoomOccupants(socket, room){
     room.users.forEach( user => {
         if(user === socket.user){
-          socket.write('* ' + user.name + "(** this is you) \n");
+          socket.write('* ' + user.name + " (** this is you) \n");
         }
         else{
           socket.write('* ' + user.name + "\n");
