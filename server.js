@@ -1,23 +1,54 @@
 var net = require("net");
-
-var sockets = [];
+var Room = require('./room');
 
 var chatServer = net.createServer();
+var ChatManager = require('./chatManager');
+var chatManager = new ChatManager();
+var User = require('./user.js');
+
+chatManager.createEmptyRoom('chat');
+chatManager.createEmptyRoom('hottub');
 
 chatServer.on('connection', (socket) => {
-    console.log('connection established');
     
-    sockets.push(socket);
+    socket.setEncoding('utf8');
     
-    socket.on('data', function(data){
-        console.log(data);
+    socket.write("Welcome to the GungHo test chat server\n");
+    socket.write("Login name?\n");
+    
+    socket.on('data', (data) => {
+        // check if socket has registered, else try and register the socket
+        // socket.user is a property that contains the user (created on chatManager)
+        var user = socket.user;
+        if(user){
+            var username = user.name;
+            data = data.trim();
+            chatManager.interpretData(username, data);
+        }
+        else{
+            var username = data.trim();
+            chatManager.setupUser(username, socket);
+        }
         
-        for(var i=0; i<sockets.length; i++){
-            sockets[i].write(data);
+    });
+   
+    socket.on('end', () => {
+        var user = socket.user;
+        if(user){
+            chatManager.disconnect(socket);
         }
     });
+    
+     socket.on('error', (exception) => {
+        console.log(exception);
+    });
+    
 })
 
 chatServer.listen(process.env.PORT);
+
+var logBuffer = function(buffer){
+    console.log(buffer.toString('utf8'));
+}
 
 console.log('chat server on: '+ process.env.IP + ':' + process.env.PORT);
