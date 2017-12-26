@@ -122,9 +122,20 @@ class ChatManager{
   leaveRoom(socket, roomname){
     var room = this.roomMap.get(roomname);
     if(room){
-      var user = socket.user;
-      this.broadcastRoomMessage(roomname, "* user has left "+ roomname + ': ' + user.name);
-      room.removeUser(user);
+      var currentUser = socket.user;
+      
+      room.users.forEach(user => {
+        var roomOccupant = this.userMap.get(user.name);
+        if(roomOccupant === socket){
+          roomOccupant.write("* user has left "+ roomname + ': ' + currentUser.name  + " (** this is you) \n");
+        }
+        else{
+          roomOccupant.write("* user has left "+ roomname + ': ' + currentUser.name + "\n");
+        }
+      })
+      
+      //this.broadcastRoomMessage(roomname, "* user has left "+ roomname + ': ' + currentUser.name);
+      room.removeUser(currentUser);
     }
     else{
       socket.write('you are not in a room/the room no longer exists \n');
