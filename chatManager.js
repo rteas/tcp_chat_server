@@ -51,8 +51,10 @@ class ChatManager{
     //console.log(this.userMap.size);
   }
   
-  disconnect(socket){
-    var user = socket.user;
+  // closes the socket and properly removes
+  // user from chat manager
+  removeUser(user){
+
     if(user){
       var room = this.roomMap.get(user.location);
       if(room){
@@ -156,7 +158,9 @@ class ChatManager{
   
   quit(socket){
     var user = socket.user;
-    this.disconnect(socket);
+    if(user){
+      this.removeUser(user);
+    }
     socket.write("BYE \n");
     socket.destroy();
   }
