@@ -12,6 +12,19 @@ class ChatManager{
     this.roomMap = new HashMap();
   }
   
+  // check if socket has registered (by checking socket.user property
+  // if it registered, intertpret the data sent by user
+  // else try to setup the user with a username
+  processRequest(socket, data){
+    var user = socket.user;
+    if(user){
+      this.interpretData(socket, data);
+    }
+    else{
+      this.setupUser(data, socket);
+    }
+  }
+  
   sendMessage(username, data){
     var message = MessageFormatter.formatMessage(username, data);
     this.broadcastMessage(message);
@@ -109,7 +122,6 @@ class ChatManager{
   
   // Commands
   listRooms(socket){
-    this.writeLine(socket, 'list rooms called! ');
     this.roomMap.forEach((room, roomname) => {
       this.writeLine(socket, '* ' + roomname + ' ('+ room.users.length + ')' );
     });
@@ -292,7 +304,7 @@ class ChatManager{
       if(recipient){
         // strip data parameters from message
         data.forEach( (param) => {
-          console.log(param);
+          // console.log(param);
           var replace = param+" "
           message = message.replace(replace, "");
         });
@@ -300,7 +312,7 @@ class ChatManager{
         this.sendPrivateMessage(socket.user.name, recipient, message);
       }
       else{
-        this.writeLine(socket, "Please enter a user using '<username>' ")
+        this.writeLine(socket, "Please enter the recipient's username ");
       }
       
     }
@@ -314,18 +326,7 @@ class ChatManager{
     
   }
   
-  // check if socket has registered (by checking socket.user property
-  // if it registered, intertpret the data sent by user
-  // else try to setup the user with a username
-  processRequest(socket, data){
-    var user = socket.user;
-    if(user){
-      this.interpretData(socket, data);
-    }
-    else{
-      this.setupUser(data, socket);
-    }
-  }
+  
   
   writeLine(socket, data){
     socket.write(data + "\n");

@@ -31,10 +31,12 @@ chatServer.on('connection', (socket) => {
     
 })
 
-chatServer.listen(process.env.PORT);
+var port = process.env.PORT || 8080;
+var ip = process.env.IP || "127.0.0.1";
+chatServer.listen(port);
 
 var logBuffer = function(buffer){
     console.log(buffer.toString('utf8'));
 }
 
-console.log('chat server on: '+ process.env.IP + ':' + process.env.PORT);
+console.log('chat server on: '+ ip + ':' + port);
