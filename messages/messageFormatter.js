@@ -1,11 +1,13 @@
 class MessageFormatter{
   
   static formatMessage(username, content){
-    return username + ': ' + this.formatEmoji(content);
+    content = this.formatEmoji(content);
+    return username + ': ' + content;
   }
   
   static formatPrivateMessage(username, content){
-    return '[Private] ' + username + ': ' + this.formatEmoji(content);
+    content = this.formatEmoji(content)
+    return '[Private] ' + username + ': ' + content;
   }
   
   static formatEmoji(content){

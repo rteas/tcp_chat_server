@@ -5,6 +5,9 @@ class User{
     this.location = location;
   }
     
+  inRoom(){
+    return (this.location !== '');
+  }
 }
 
 module.exports = User;

@@ -175,6 +175,12 @@ class ChatManager{
   }
   
   quit(socket){
+    this.clearUserData(socket);
+    this.writeLine(socket, "BYE");
+    socket.destroy();
+  }
+  
+  clearUserData(socket){
     var user = socket.user;
     if(user){
       if(user.location){
@@ -182,8 +188,6 @@ class ChatManager{
       }
       this.removeUser(user);
     }
-    this.writeLine(socket, "BYE");
-    socket.destroy();
   }
   
   // this will determine whether the data/text is a command/message
@@ -195,7 +199,7 @@ class ChatManager{
     }
     else{
       // var user = socket.user;
-      if(user.location !== ''){
+      if(user.inRoom()){
         this.sendRoomMessage(user.location, user.name, data);
       }
       else{
@@ -220,6 +224,13 @@ class ChatManager{
     var privateMsg = "/p <recipient-username> <message> - sends a private message to user";
     var help = "/help - list available commands"
     
+    this.writeLine(socket, listRooms);
+    this.writeLine(socket, joinRoom);
+    this.writeLine(socket, leaveRoom);
+    this.writeLine(socket, quit);
+    this.writeLine(socket, privateMsg);
+    this.writeLine(socket, help);
+    /*
     this.writeLine(socket, 
       listRooms + "\n" +
       joinRoom + "\n" +
@@ -228,7 +239,7 @@ class ChatManager{
       privateMsg + "\n" +
       help
     );
-
+    */
   }
   // if the userusername already exists,
   // ask for another userusername
@@ -256,8 +267,6 @@ class ChatManager{
     }
     
   }
-  
-  
   
   executeCommand(socket, command){
     
@@ -305,11 +314,24 @@ class ChatManager{
     
   }
   
+  // check if socket has registered (by checking socket.user property
+  // if it registered, intertpret the data sent by user
+  // else try to setup the user with a username
+  processRequest(socket, data){
+    var user = socket.user;
+    if(user){
+      this.interpretData(socket, data);
+    }
+    else{
+      this.setupUser(data, socket);
+    }
+  }
+  
   writeLine(socket, data){
     socket.write(data + "\n");
   }
-  //gets
   
+  //gets
   getUserSize(){
     return this.userMap.size;
   }
