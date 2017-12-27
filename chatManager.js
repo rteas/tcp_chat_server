@@ -22,6 +22,22 @@ class ChatManager{
     this.broadcastRoomMessage(roomname, message);
   }
   
+  sendPrivateMessage(senderName, recipientName, data){
+    var message = MessageFormatter.formatPrivateMessage(senderName, data);
+    
+    var recipientSocket = this.userMap.get(recipientName);
+    var senderSocket = this.userMap.get(senderName);
+    
+    if(recipientSocket){
+      this.writeLine(recipientSocket, message);
+      this.writeLine(senderSocket, message);
+    }
+    else{
+      this.writeLine(senderSocket, 'The user ' + recipientName + ' does not exist');
+    }
+    
+  }
+  
   broadcastRoomMessage(roomname, message){
     var room = this.roomMap.get(roomname);
     // get all the user sockets of the room
@@ -29,14 +45,14 @@ class ChatManager{
     room.users.forEach( user => {
       var username = user.name;
       var socket = this.userMap.get(username);
-      socket.write(message + '\n');
+      this.writeLine(socket, message);
     })
   }
   
   broadcastMessage(message){
     // Value: socket, Key: socketUsername
     this.userMap.forEach((socket, username) => {
-      socket.write(message + "\n");
+      this.writeLine(socket, message);
     });
   }
   
@@ -73,10 +89,10 @@ class ChatManager{
     if(socket){
       
       if(this.roomMap.has(roomname)){
-        socket.write('room already exists')
+        this.writeLine(socket, 'room already exists');
       }
       else{
-        socket.write(roomname + ' room created!');
+        this.writeLine(socket, roomname + ' room created!');
       }
     }
     
@@ -93,15 +109,16 @@ class ChatManager{
   
   // Commands
   listRooms(socket){
-    socket.write('list rooms called! \n');
+    this.writeLine(socket, 'list rooms called! ');
     this.roomMap.forEach((room, roomname) => {
-      socket.write('* ' + roomname + ' ('+ room.users.length + ')' + "\n");
+      this.writeLine(socket, '* ' + roomname + ' ('+ room.users.length + ')' );
     });
   }
   
   joinRoom(socket, roomname){
     // status
-    socket.write('entering room: '+ roomname + "\n");
+    this.writeLine(socket, 'entering room: '+ roomname);
+    
     var room = this.roomMap.get(roomname);
 
     if(room){
@@ -117,7 +134,7 @@ class ChatManager{
       
     }
     else {
-      socket.write('room ' + '[' + roomname + ']' + 'does not exist' + "\n");
+      this.writeLine(socket, 'room ' + '[' + roomname + ']' + 'does not exist');
     }
   }
   
@@ -129,10 +146,11 @@ class ChatManager{
       room.users.forEach(user => {
         var roomOccupant = this.userMap.get(user.name);
         if(roomOccupant === socket){
-          roomOccupant.write("* user has left "+ roomname + ': ' + currentUser.name  + " (** this is you) \n");
+          this.writeLine(roomOccupant, "* user has left "+ roomname + ': ' + currentUser.name  + " (** this is you)");
+
         }
         else{
-          roomOccupant.write("* user has left "+ roomname + ': ' + currentUser.name + "\n");
+          this.writeLine(roomOccupant, "* user has left "+ roomname + ': ' + currentUser.name );
         }
       })
       
@@ -140,17 +158,17 @@ class ChatManager{
       room.removeUser(currentUser);
     }
     else{
-      socket.write('you are not in a room/the room no longer exists \n');
+      this.writeLine(socket, "you are not in a room/the room no longer exists");
     }
   }
   
   listRoomOccupants(socket, room){
     room.users.forEach( user => {
         if(user === socket.user){
-          socket.write('* ' + user.name + " (** this is you) \n");
+          this.writeLine(socket, '* ' + user.name + " (** this is you) ");
         }
         else{
-          socket.write('* ' + user.name + "\n");
+          this.writeLine(socket, '* ' + user.name);
         }
         
       });
@@ -161,23 +179,26 @@ class ChatManager{
     if(user){
       this.removeUser(user);
     }
-    socket.write("BYE \n");
+    this.writeLine(socket, "BYE");
     socket.destroy();
   }
   
   // this will determine whether the data/text is a command/message
-  interpretData(username, data){
-    var socket = this.userMap.get(username);
+  interpretData(socket, data){
+    var user = socket.user;
+    
     if(this.isCommand(data)){
       this.executeCommand(socket, data)
     }
     else{
-      var user = socket.user;
+      // var user = socket.user;
       if(user.location !== ''){
         this.sendRoomMessage(user.location, user.name, data);
       }
       else{
-        this.sendMessage(username, data);
+        // Prompt the user to join a room
+        this.writeLine(socket, "Please enter a room before chatting - type '/help' for a list of available commands");
+        //this.sendMessage(user.name, data);
       }
       
     }
@@ -188,6 +209,24 @@ class ChatManager{
     return data.match("^/");
   }
   
+  listCommands(socket){
+    var listRooms = "/rooms - lists rooms";
+    var joinRoom = "/join - joins a room";
+    var leaveRoom = "/leave - leaves the room";
+    var quit = "/quit - terminate TCP connection with application";
+    var privateMsg = "/p <recipient-username> <message> - sends a private message to user";
+    var help = "/help - list available commands"
+    
+    this.writeLine(socket, 
+      listRooms + "\n" +
+      joinRoom + "\n" +
+      leaveRoom + "\n" +
+      quit + "\n" +
+      privateMsg + "\n" +
+      help
+    );
+
+  }
   // if the userusername already exists,
   // ask for another userusername
   // else register the socket with the userusername 
@@ -196,8 +235,12 @@ class ChatManager{
 
     if(this.hasUser(username)){
       // console.log('user found');
-      socket.write('Sorry, username taken. \n');
-      socket.write("Login username?\n");
+      this.writeLine(socket, 'Sorry, username taken.');
+      this.writeLine(socket, "Login Name?" );
+    }
+    else if(username.includes(" ")){
+      this.writeLine(socket, 'Sorry, a username cannot cointain spaces.');
+      this.writeLine("Login Name?");
     }
     else{
       var location = '';
@@ -206,7 +249,7 @@ class ChatManager{
       
       this.addUser(username, socket);
       
-      socket.write("Welcome " +socket.user.name + "! \n");
+      this.writeLine(socket, "Welcome " +socket.user.name + "!" );
     }
     
   }
@@ -218,18 +261,49 @@ class ChatManager{
     if(command.match("^/rooms$")){
       this.listRooms(socket);
     }
-    if(command.match("^/join ")){
+    else if(command.match("^/join ")){
       // get the roomname
       var roomname = command.replace("/join ","");
       this.joinRoom(socket, roomname);
     }
-    if(command.match("^/leave$")){
+    else if(command.match("^/leave$")){
       this.leaveRoom(socket, socket.user.location);
     }
-    if(command.match("^/quit$")){
+    else if(command.match("^/quit$")){
       this.quit(socket);
     }
+    else if(command.match("^/p ")){
+      
+      var data = command.split(" ", 2);
+      var recipient = data[1];
+      var message = command;
+      if(recipient){
+        // strip data parameters from message
+        data.forEach( (param) => {
+          console.log(param);
+          var replace = param+" "
+          message = message.replace(replace, "");
+        });
+        
+        this.sendPrivateMessage(socket.user.name, recipient, message);
+      }
+      else{
+        this.writeLine(socket, "Please enter a user using '<username>' ")
+      }
+      
+    }
+    else if(command.match("^/help$")){
+      this.listCommands(socket);
+    }
+    else{
+      var info = "'" + command + "' "+ "is an invalid command. Type '/help' for a list of available commands";
+      this.writeLine(socket, info);
+    }
     
+  }
+  
+  writeLine(socket, data){
+    socket.write(data + "\n");
   }
   //gets
   

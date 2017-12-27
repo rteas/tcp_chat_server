@@ -4,7 +4,7 @@ class MessageFormatter{
     return username + ': ' + content;
   }
   
-  static formatPersonalMessage(username, content){
+  static formatPrivateMessage(username, content){
     return '[Private] ' + username + ': ' + content;
   }
   

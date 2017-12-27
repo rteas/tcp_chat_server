@@ -17,13 +17,13 @@ chatServer.on('connection', (socket) => {
     socket.write("Login name?\n");
     
     socket.on('data', (data) => {
-        // check if socket has registered, else try and register the socket
-        // socket.user is a property that contains the user (created on chatManager)
+        // check if socket has registered (by checking socket.user property
+        // if it registered, intertpret the data sent by user
+        // else try to setup the user with a username
         var user = socket.user;
         if(user){
-            var username = user.name;
             data = data.trim();
-            chatManager.interpretData(username, data);
+            chatManager.interpretData(socket, data);
         }
         else{
             var username = data.trim();
