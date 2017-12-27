@@ -14,7 +14,7 @@ chatServer.on('connection', (socket) => {
     socket.setEncoding('utf8');
     
     socket.write("Welcome to the GungHo test chat server\n");
-    socket.write("Login name?\n");
+    socket.write("Login Name?\n");
     
     socket.on('data', (data) => {
         // check if socket has registered (by checking socket.user property

@@ -177,6 +177,9 @@ class ChatManager{
   quit(socket){
     var user = socket.user;
     if(user){
+      if(user.location){
+        this.leaveRoom(socket, user.location);
+      }
       this.removeUser(user);
     }
     this.writeLine(socket, "BYE");
@@ -240,7 +243,7 @@ class ChatManager{
     }
     else if(username.includes(" ")){
       this.writeLine(socket, 'Sorry, a username cannot cointain spaces.');
-      this.writeLine("Login Name?");
+      this.writeLine(socket, "Login Name?");
     }
     else{
       var location = '';
