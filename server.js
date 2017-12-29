@@ -22,7 +22,7 @@ chatServer.on('connection', (socket) => {
     });
    
     socket.on('end', () => {
-        chatManager.clearUserData(socket);
+        chatManager.clearSocketData(socket);
     });
     
      socket.on('error', (exception) => {
@@ -32,8 +32,8 @@ chatServer.on('connection', (socket) => {
 })
 
 var port = process.env.PORT || 8080;
-var ip = process.env.IP || "127.0.0.1";
-chatServer.listen(port);
+var ip = process.env.IP || "0.0.0.0";
+chatServer.listen(port, ip);
 
 var logBuffer = function(buffer){
     console.log(buffer.toString('utf8'));

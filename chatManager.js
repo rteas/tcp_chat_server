@@ -80,19 +80,6 @@ class ChatManager{
     //console.log(this.userMap.size);
   }
   
-  // closes the socket and properly removes
-  // user from chat manager
-  removeUser(user){
-
-    if(user){
-      var room = this.roomMap.get(user.location);
-      if(room){
-        room.removeUser(user);
-      }
-      this.userMap.remove(user.name);
-    }
-  }
-  
   hasUser(username){
     return this.userMap.has(username);
   }
@@ -187,19 +174,26 @@ class ChatManager{
   }
   
   quit(socket){
-    this.clearUserData(socket);
+    this.removeUser(socket.user);
     this.writeLine(socket, "BYE");
     socket.destroy();
   }
   
-  clearUserData(socket){
-    var user = socket.user;
+  
+  removeUser(user){
     if(user){
-      if(user.location){
-        this.leaveRoom(socket, user.location);
+      var room = this.roomMap.get(user.location);
+      if(room){
+        var socket = this.userMap.get(user.name);
+        this.leaveRoom(socket, room.name);
       }
-      this.removeUser(user);
+      this.userMap.remove(user.name);
     }
+  }
+  
+  clearSocketData(socket){
+    var user = socket.user;
+    this.removeUser(user);
   }
   
   // this will determine whether the data/text is a command/message
@@ -230,7 +224,7 @@ class ChatManager{
   
   listCommands(socket){
     var listRooms = "/rooms - lists rooms";
-    var joinRoom = "/join - joins a room";
+    var joinRoom = "/join <roomname> - joins the room, <roomname>";
     var leaveRoom = "/leave - leaves the room";
     var quit = "/quit - terminate TCP connection with application";
     var privateMsg = "/p <recipient-username> <message> - sends a private message to user";
