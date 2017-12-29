@@ -85,7 +85,7 @@ class ChatManager{
   }
   
   addRoom(roomname){
-
+    
     if(this.roomMap.has(roomname)){
       return false;
     }
@@ -288,6 +288,10 @@ class ChatManager{
     }
     else if(username.includes(" ")){
       this.writeLine(socket, 'Sorry, a username cannot cointain spaces.');
+      this.writeLine(socket, "Login Name?");
+    }
+    else if(username === ""){
+      this.writeLine(socket, 'Sorry, a username has to at least have one character.');
       this.writeLine(socket, "Login Name?");
     }
     else{
