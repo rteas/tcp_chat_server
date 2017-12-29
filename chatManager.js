@@ -112,6 +112,7 @@ class ChatManager{
     this.roomMap.forEach((room, roomname) => {
       this.writeLine(socket, '* ' + roomname + ' ('+ room.users.length + ')' );
     });
+    this.writeLine(socket, "end of list.");
   }
   
   joinRoom(socket, roomname){
@@ -184,6 +185,7 @@ class ChatManager{
         }
         
       });
+    this.writeLine(socket, "end of list.");
   }
   
   quit(socket){
