@@ -6,8 +6,7 @@ Instructions for MAC/OSX:
    - http://nodesource.com/blog/installing-nodejs-tutorial-mac-os-x/
 
 2. Clone this project
-
-Using the terminal (If you haven't already):
+   - Using the terminal (If you haven't already):
 
 3. Enter project directory
 
