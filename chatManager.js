@@ -163,7 +163,9 @@ class ChatManager{
       //this.broadcastRoomMessage(roomname, "* user has left "+ roomname + ': ' + currentUser.name);
       room.removeUser(currentUser);
       // if the room has no more users, remove it
-      this.removeRoom(roomname);
+      if(room.users.length === 0){
+        this.removeRoom(roomname);
+      }
     }
     else{
       this.writeLine(socket, "you are not in a room/the room no longer exists");
