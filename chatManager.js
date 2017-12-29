@@ -120,11 +120,11 @@ class ChatManager{
     var room = this.roomMap.get(roomname);
 
     if(room){
-      var userRoom = socket.user.location;
+      var currentRoom = socket.user.location;
       
-      if(userRoom){
-        var oldRoom = this.roomMap.get(userRoom);
-        oldRoom.removeUser(socket.user);
+      // leave the current room to join the new room
+      if(currentRoom){
+        this.leaveRoom(socket, currentRoom);
       }
       
       this.writeLine(socket, 'entering room: '+ roomname);
