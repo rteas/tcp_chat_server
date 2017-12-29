@@ -84,16 +84,15 @@ class ChatManager{
     return this.userMap.has(username);
   }
   
-  addRoom(username, roomname){
-    var socket = this.userMap.get(username);
-    if(socket){
-      
-      if(this.roomMap.has(roomname)){
-        this.writeLine(socket, 'room already exists');
-      }
-      else{
-        this.writeLine(socket, roomname + ' room created!');
-      }
+  addRoom(roomname){
+
+    if(this.roomMap.has(roomname)){
+      return false;
+    }
+    else{
+      var newRoom = new Room(roomname);
+      this.roomMap.set(roomname, newRoom);
+      return true;
     }
     
   }
@@ -109,31 +108,39 @@ class ChatManager{
   
   // Commands
   listRooms(socket){
+    this.writeLine(socket, "Active rooms are:")
     this.roomMap.forEach((room, roomname) => {
       this.writeLine(socket, '* ' + roomname + ' ('+ room.users.length + ')' );
     });
   }
   
   joinRoom(socket, roomname){
-    // status
-    this.writeLine(socket, 'entering room: '+ roomname);
     
     var room = this.roomMap.get(roomname);
 
     if(room){
       var userRoom = socket.user.location;
+      
       if(userRoom){
         var oldRoom = this.roomMap.get(userRoom);
         oldRoom.removeUser(socket.user);
       }
+      
+      this.writeLine(socket, 'entering room: '+ roomname);
       var msg = "* new user joined chat: " + socket.user.name;
       this.broadcastRoomMessage(roomname, msg);
       room.addUser(socket.user);
       this.listRoomOccupants(socket, room);
       
     }
+    // create the room if it doesn't exist and join it
     else {
-      this.writeLine(socket, 'room ' + '[' + roomname + ']' + 'does not exist');
+      if(this.addRoom(roomname)){
+        this.joinRoom(socket, roomname);
+      }
+      else{
+        this.writeLine(socket, "The room "+ roomname + " already exists");
+      }
     }
   }
   
@@ -155,10 +162,14 @@ class ChatManager{
       
       //this.broadcastRoomMessage(roomname, "* user has left "+ roomname + ': ' + currentUser.name);
       room.removeUser(currentUser);
+      // if the room has no more users, remove it
+      this.removeRoom(roomname);
     }
     else{
       this.writeLine(socket, "you are not in a room/the room no longer exists");
     }
+    
+    
   }
   
   listRoomOccupants(socket, room){
@@ -222,19 +233,32 @@ class ChatManager{
     return data.match("^/");
   }
   
+  listEmoticons(socket){
+    this.writeLine(socket, 'Emoticons List');
+    this.writeLine(socket, '==============');
+    this.writeLine(socket, ':) => 😊');
+    this.writeLine(socket, ':P => 😋');
+    this.writeLine(socket, ';) => 😉');
+    this.writeLine(socket, ':D => 😄');
+    this.writeLine(socket, ":'( => 😢");
+    this.writeLine(socket, ':( => 😒');
+  }
+  
   listCommands(socket){
     var listRooms = "/rooms - lists rooms";
-    var joinRoom = "/join <roomname> - joins the room, <roomname>";
+    var joinRoom = "/join <roomname> - joins the room, <roomname>. If the room does not exist, it is created";
     var leaveRoom = "/leave - leaves the room";
     var quit = "/quit - terminate TCP connection with application";
     var privateMsg = "/p <recipient-username> <message> - sends a private message to user";
+    var emoticons = "/emoticons - list the available emoticons";
     var help = "/help - list available commands"
     
     this.writeLine(socket, listRooms);
     this.writeLine(socket, joinRoom);
     this.writeLine(socket, leaveRoom);
-    this.writeLine(socket, quit);
     this.writeLine(socket, privateMsg);
+    this.writeLine(socket, emoticons);
+    this.writeLine(socket, quit);
     this.writeLine(socket, help);
     /*
     this.writeLine(socket, 
@@ -289,6 +313,9 @@ class ChatManager{
     }
     else if(command.match("^/quit$")){
       this.quit(socket);
+    }
+    else if(command.match("^/emoticons$")){
+      this.listEmoticons(socket);
     }
     else if(command.match("^/p ")){
       

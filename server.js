@@ -6,8 +6,10 @@ var ChatManager = require('./chatManager');
 var chatManager = new ChatManager();
 var User = require('./user.js');
 
+/*
 chatManager.createEmptyRoom('chat');
 chatManager.createEmptyRoom('hottub');
+*/
 
 chatServer.on('connection', (socket) => {
     
